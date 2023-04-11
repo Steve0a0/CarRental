@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %} Rate Your Experience {% endblock %}
+
+
+{% block css %} 
+{% endblock css %}
+
+
+{% block body %}
+<style>
+  h1 {
+    text-align: center;
+}
+
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}
+
+input, select {
+    padding: 0.5em;
+    border-radius: 0.25em;
+    border: 1px solid #ccc;
+    margin-bottom: 1em;
+}
+
+button {
+    padding: 0.5em;
+    border-radius: 0.25em;
+    background-color: #0077cc;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+#message {
+    text-align: center;
+    margin-top: 1em;
+}
+
+</style>
+
+<form style="border:1px solid #ccc" method="POST"> {% csrf_token %}
+  <div class="container">
+    <h1>Rate Your Experience</h1>
+    {% comment %} <p>Please fill in this form to login into your account.</p>
+    <h6>If not yet register, then click here <a href="/car_dealer_signup/">Signup</a></h6> {% endcomment %}
+    <hr>
+    <div id="error"></div>
+    <form id="rating-form" request="POST">
+        {% csrf_token %}
+      <div>
+          <label for="registration-number">Car Registration Number:</label>
+          <input type="text" id="registration-number" name="registeration_number" value="{{car.registeration_number}}" readonly>
+      </div>
+      
+      <div>
+          <label for="user-id">User ID:</label>
+          <input type="text" id="user-id"  value="{{request.user}}" readonly>
+      </div>
+
+     
+      <div>
+          <label for="rating">Rating:</label>
+          <select id="rating" name="rating" required>
+              <option value="">Select a rating</option>
+              <option value="1">1 star</option>
+              <option value="2">2 stars</option>
+              <option value="3">3 stars</option>
+              <option value="4">4 stars</option>
+              <option value="5">5 stars</option>
+          </select>
+      </div>
+      <button type="submit" id="submit_button">Submit Rating</button>
+  </form>
+  </div>
+</form>
+</body>
+</html>
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+     
+          // API CALL HERE
+          $("#submit_button").click(function (e) { 
+              e.preventDefault(
+                  console.log('clicked')
+              );
+              $.ajax({
+                  url: "{% url 'rating-api' %}",
+                  type: "POST",
+                  dataType: 'JSON',
+                  beforeSend: function (xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                  data: JSON.stringify({
+                    registeration_number:$("input[name='registeration_number']").val(),
+                    rating: $("#rating option:selected").val(),
+                     
+                  }),
+                  contentType: 'application/json',
+                  success: function (data) {
+                      console.log(data);
+                      if(data.status == "200"){
+                          window.location.href = "/past_orders/";
+                      }
+                      else{
+                          // this content displaying in error div
+                          console.log(data.status);
+                          $("#error").html(data.status);
+                      }
+                  }
+              });
+  
+  
+          });
+      });//main end
+</script>
+
+
+
+{% endblock %}
+{% block js %}
+{% endblock %}

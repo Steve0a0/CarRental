@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %} Rent Cars {% endblock %}
+{% block css %}
+{% endblock %}
+{% block body %}
+<div class="container mt-4">
+    <div>
+      <h1 class="display-4">Steve's Online Car Rental System</h1>
+      <p class="lead">You can select from the wide range of Cars availabe.</p>
+      <hr class="my-4">
+    </div>
+  <div class="row mt-4 justify-content-center">
+{% for car in cars %}
+<div class="card mb-3 shadow p-2" style="max-width: 450px;">
+  <div class="row g-0">
+    <div class="col-md-4">
+      <img src="{{car.image.url}}" class="img-fluid rounded-start" alt="...">
+    </div>
+    <div class="col-md-8">
+      <div class="card-body">
+        <h5 class="card-title">Car Name: {{car.name}}</h5>
+        <h6 class="card-text">Car Dealer: <b>{{car.car_dealer}}</b></h6>
+        <p class="car-text">Registeration Number: <b>{{car.registeration_number}}</b> </p>
+        <div> 
+            <div id="rating-{{car.registeration_number}}">
+              <p class="card-text">
+                {% for i in list %}
+                  {% if i.car == car.id %}
+                    {% if i.rating == None %}
+                    <small class="text-muted">Ratings : No Rating Yet</small>
+                    {% else %}
+                    <small class="text-muted">Ratings : {{i.rating}}</small>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </p>
+            </div>
+        </div>
+        <div class="text-end">
+          <a href="/customer_login/" class="btn btn-primary float-start">Rent </a>
+          <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#service-history-modal-{{car.id}}">Service History</button>
+        </div>
+
+        <!-- Service history modal -->
+        <div class="modal fade" id="service-history-modal-{{car.id}}" tabindex="-1" aria-labelledby="service-history-modal-{{car.id}}-label" aria-hidden="true">
+          <div class="modal-dialog" style="max-width: 800px;">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="service-history-modal-{{car.id}}-label">Service History for {{car.name}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">ServiceID</th>
+                    <th scope="col">CustomerName</th>
+                    <th scope="col">CategoryName</th>
+                    <th scope="col">RegistrationNumber</th>
+                  </tr>
+                </thead>
+                <tbody id="service-history-table-{{car.id}}">
+                </tbody>
+              </table>
+                </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+     
+      {% endfor %}
+    </div>
+  </div>
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+  $(document).ready(function(){
+            // API CALL HERE
+                $.ajax({
+                 url: "{% url 'rating-api' %}",
+                    type: "GET",
+                    dataType: 'JSON',
+                    beforeSend: function (xhr, settings) {
+                          xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                      },
+                    data:{},
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log(data);
+                        if(data.status == "200"){
+                            
+                              // for loop to display the ratings
+                              for (var i = 0; i < data.data.length; i++) {                                  
+                                  $("#rating-{{car.registeration_number}}").append("<p> Review:"+data.data[i].registeration_number+"</p>");
+                                  $("#rating-{{car.registeration_number}}").append("<p> Rating:"+data.data[i].rating+"</p>");
+
+                              }           
+                        }
+                        else{
+                            // this content displaying in error div
+                            console.log(data.status);
+                            $("#error").html(data.status);
+                        }
+                    }
+                });
+    
+    
+            });
+     
+  </script>
+  
+  <script>
+    function loadServiceHistory(registration_number){
+      $.ajax({
+        url: "http://54.162.5.227:8000/bookingservices?RegistrationNumber="+registration_number,
+        type: "GET",
+        dataType: 'JSON',
+        beforeSend: function (xhr, settings) {
+          xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+        },
+        success: function (data) {
+          console.log(data);
+          if(data.status == "200"){
+            $("#service-history-table-{{car.id}}").empty();
+            for (var i = 0; i < data.data.length; i++) {                                  
+              $("#service-history-table-{{car.id}}").append("<tr><td>"+data.data[i].ServiceID+"</td><td>"+data.data[i].CustomerName+"</td><td>"+data.data[i].CategoryName+"</td><td>"+data.data[i].RegistrationNumber+"</td></tr>");
+            }           
+          }
+          else{
+            console.log(data.status);
+            $("#error").html(data.status);
+          }
+        }
+      });
+    }
+  </script>
+  
+
+{% endblock %}
+
